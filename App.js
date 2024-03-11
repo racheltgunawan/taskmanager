@@ -1,31 +1,43 @@
 import 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
-import Task from './components/Task'
-import Folder from './components/Folder'
+import Task from './components/Task';
+import Folder from './components/Folder';
+import Inventory from './Inventory';
+import Shop from './Shop';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
 
-// import {open} from 'react-native-quick-sqlite';
-// const db = open('myDb.sqlite');
+const Drawer = createDrawerNavigator();
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.upComingTasksWrapper}>
-        <Text style={styles.upComingTasks}>Upcoming Tasks:</Text>
-
-        <View style={styles.Tasks}>
-          <Task/>
-          <Task/>
-        </View>
+const HomeScreen = () => (
+  <View style={styles.container}>
+    <View style={styles.upComingTasksWrapper}>
+      <Text style={styles.upComingTasks}>Upcoming Tasks:</Text>
+      <View style={styles.Tasks}>
+        <Task />
+        <Task />
       </View>
-      <View style={styles.foldersWrapper}>
-        <View style={styles.folder}>
-          <Folder/>
-          <Folder/>
-        </View>
-      </View>
-      <StatusBar style="auto" />
     </View>
+    <View style={styles.foldersWrapper}>
+      <View style={styles.folder}>
+        <Folder />
+        <Folder />
+      </View>
+    </View>
+    <StatusBar style="auto" />
+  </View>
+);
+
+export default function Home() {
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator initialRouteName="Home">
+        <Drawer.Screen name="Home" component={HomeScreen} />
+        <Drawer.Screen name="Inventory" component={Inventory} />
+        <Drawer.Screen name="Shop" component={Shop} />
+      </Drawer.Navigator>
+    </NavigationContainer>
   );
 }
 
@@ -39,15 +51,13 @@ const styles = StyleSheet.create({
     flex: 0.5, // Takes up half of the vertical space
     backgroundColor: 'white',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   upComingTasks: {
     fontWeight: 'bold',
-    fontSize: 20
+    fontSize: 20,
   },
-  Tasks: {
-    
-  },
+  Tasks: {},
   foldersWrapper: {
     flex: 1, // Takes up the remaining space
     flexDirection: 'row', // Display children horizontally
