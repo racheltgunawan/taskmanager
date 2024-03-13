@@ -1,0 +1,276 @@
+import { StatusBar } from 'expo-status-bar';
+import { TextInput, Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
+import Task from '../components/Task';
+import Folder from '../components/Folder'
+import { useState, useEffect } from 'react'
+import React from 'react'
+import { IconButton } from 'react-native-paper';
+import Fallback from "../components/Fallback";
+
+import * as SQLite from 'expo-sqlite';
+
+const HomeScreen = ({ navigation }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [db, setDb] = useState(SQLite.openDatabase('example.db'));
+  const [isLoading, setIsLoading] = useState(true);
+  const [names, setNames] = useState([]);
+  const [currentName, setCurrentName] = useState(undefined);
+
+
+  useEffect(() => {
+    db.transaction(tx => {
+      tx.executeSql('CREATE TABLE IF NOT EXISTS names (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)')
+    });
+
+    db.transaction(tx => {
+      tx.executeSql('SELECT * FROM names', null,
+        (txObj, resultSet) => setNames(resultSet.rows._array),
+        (txObj, error) => console.log(error)
+      );
+    });
+
+    setIsLoading(false);
+  }, [db]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading names...</Text>
+      </View>
+    );
+  }
+
+  const addName = () => {
+    db.transaction(tx => {
+      tx.executeSql('INSERT INTO names (name) values (?)', [currentName],
+        (txObj, resultSet) => {
+          let existingNames = [...names];
+          existingNames.push({ id: resultSet.insertId, name: currentName});
+          setNames(existingNames);
+          setCurrentName(undefined);
+        },
+        (txObj, error) => console.log(error)
+      );
+    });
+  }
+
+  const deleteName = (id) => {
+    db.transaction(tx => {
+      tx.executeSql('DELETE FROM names WHERE id = ?', [id],
+        (txObj, resultSet) => {
+          if (resultSet.rowsAffected > 0) {
+            let existingNames = [...names].filter(name => name.id !== id);
+            setNames(existingNames);
+          }
+        },
+        (txObj, error) => console.log(error)
+      );
+    });
+  };
+
+  const updateName = (id) => {
+    db.transaction(tx => {
+      tx.executeSql('UPDATE names SET name = ? WHERE id = ?', [currentName, id],
+        (txObj, resultSet) => {
+          if (resultSet.rowsAffected > 0) {
+            let existingNames = [...names];
+            const indexToUpdate = existingNames.findIndex(name => name.id === id);
+            existingNames[indexToUpdate].name = currentName;
+            setNames(existingNames);
+            setCurrentName(undefined);
+          }
+        },
+        (txObj, error) => console.log(error)
+      );
+    });
+  };
+
+  const showNames = () => {
+    return names.map((name, index) => {
+      return (
+        <View key={index} style={{
+          backgroundColor: "#1e90ff",
+          borderRadius: 6,
+          paddingHorizontal: 6,
+          paddingVertical: 8,
+          marginBottom: 12,
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{ 
+            color: "#fff", 
+            fontSize: 20, 
+            fontWeight: "800", 
+            flex: 1 
+          }}>        
+          {name.name}
+        </Text>
+        <IconButton 
+          icon="pencil" 
+          iconColor="#fff"
+          // onPress={() => {handleEditTodo(item); setModalVisible(true)}}
+        />
+        <IconButton 
+          icon="trash-can" 
+          iconColor="#fff" 
+          onPress={() => deleteName(name.id)}
+        />
+      </View>
+      );
+    });
+  };
+
+  return (
+    <View style={styles.container}>      
+      <View style={styles.upComingTasksWrapper}>
+        <Text style={styles.upComingTasks}>Upcoming Tasks</Text>       
+        <View style={styles.Tasks}>
+          {showNames()}
+          {names.length <= 0 && <Fallback />}
+        </View>
+      </View>
+
+      <View style={styles.foldersWrapper}>
+        <View style={styles.folder}>
+        </View>
+      </View>
+      <StatusBar style="auto" />
+  
+      <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => {
+        Alert.alert('Modal has been closed.');
+        setModalVisible(!modalVisible);
+      }}>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <TextInput
+            style={{
+              borderWidth: 2,
+              borderColor: "#000",
+              borderRadius: 6,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              marginBottom: 20
+            }}
+            placeholder="Add a task"
+            // value={todo}
+            onChangeText={setCurrentName}
+          />
+            <Pressable
+            style={[styles.button, styles.submitAddButton]}
+            onPress={() => {setModalVisible(!modalVisible); addName()}}>
+            <Text style={styles.textStyle}>Add</Text>
+            </Pressable>
+        </View>
+      </View>
+    </Modal>
+
+    
+
+      <View style={styles.addButton}>
+        <Pressable
+          style={[styles.button, styles.buttonOpen]}
+          onPress={() => setModalVisible(true)}>
+          <Text style={styles.textStyle}>+</Text>
+        </Pressable>
+      </View>
+  
+    </View>
+  )
+};
+export default HomeScreen;
+
+
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      flexDirection: 'column', // Arrange children vertically
+      backgroundColor: '#fff',
+    },
+    upComingTasksWrapper: {
+      flex: 0.5, // Takes up half of the vertical space
+      backgroundColor: 'white',
+      // alignItems: 'center',
+      // justifyContent: 'center',
+      paddingTop: 20,
+      paddingHorizontal: 20
+    },
+    upComingTasks: {
+      alignSelf: 'center',
+      fontWeight: 'bold',
+      fontSize: 20,
+    },
+    Tasks: {
+      marginTop: 30
+  
+    },
+    foldersWrapper: {
+      flex: 1, // Takes up the remaining space
+      flexDirection: 'row', // Display children horizontally
+      justifyContent: 'space-between', // Space between columns
+      paddingHorizontal: 30, // Optional: Add padding to the sides
+    },
+    folder: {
+      flex: 1, // Each column takes up equal space
+      paddingHorizontal: 5, // Optional: Add padding between columns
+    },
+    addButton:{
+      alignItems: 'flex-end',
+      marginEnd: 30,
+      marginBottom: 30
+    },
+    centeredView: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 22,
+    },
+    modalView: {
+      margin: 20,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      padding: 35,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    button: {
+      borderRadius: 20,
+      padding: 10,
+      elevation: 2,
+    },
+    buttonOpen: {
+      width: 60,
+      height: 60,
+      backgroundColor: '#FFF',
+      borderRadius: 60,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderColor: '#C0C0C0',
+      borderWidth: 1,
+    },
+    submitAddButton: {
+      backgroundColor: '#2196F3',
+    },
+    textStyle: {
+      // color: 'white',
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    modalText: {
+      marginBottom: 15,
+      textAlign: 'center',
+    },
+});
