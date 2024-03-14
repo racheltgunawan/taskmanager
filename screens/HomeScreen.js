@@ -38,8 +38,25 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const showFilteredNames = () => {
-    return showNames(names.filter((name) => name.name.toLowerCase().includes(searchQuery.toLowerCase())));
+    return names
+      .filter((name) => name.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map((name, index) => (
+        <View key={index} style={{
+          backgroundColor: "#1e90ff",
+          borderRadius: 6,
+          paddingHorizontal: 6,
+          paddingVertical: 8,
+          marginBottom: 12,
+          flexDirection: "row",
+          alignItems: "center",
+        }}>
+          <Text style={{ color: "#fff", fontSize: 20, fontWeight: "800", flex: 1 }}>{name.name}</Text>
+          <IconButton icon="pencil" iconColor="#fff" onPress={() => openEditModal(name.id, name.name)} />
+          <IconButton icon="trash-can" iconColor="#fff" onPress={() => deleteName(name.id)} />
+        </View>
+      ));
   };
+  
 
   useEffect(() => {
     db.transaction(tx => {
