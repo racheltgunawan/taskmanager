@@ -17,6 +17,30 @@ const HomeScreen = ({ navigation }) => {
   const [names, setNames] = useState([]);
   const [currentName, setCurrentName] = useState(undefined);
 
+  //added
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editItemId, setEditItemId] = useState(null);
+
+  const openEditModal = (id, name) => {
+    setEditedName(name);
+    setEditItemId(id);
+    setEditModalVisible(true);
+  };
+
+  const updateNameAndCloseModal = () => {
+    if (editItemId !== null && editedName !== '') {
+      updateName(editItemId);
+      setEditModalVisible(false);
+    }
+  };
+
+  const closeEditModal = () => {
+    setEditedName('');
+    setEditItemId(null);
+    setEditModalVisible(false);
+  };
+// add end 
 
   useEffect(() => {
     db.transaction(tx => {
@@ -71,14 +95,17 @@ const HomeScreen = ({ navigation }) => {
 
   const updateName = (id) => {
     db.transaction(tx => {
-      tx.executeSql('UPDATE names SET name = ? WHERE id = ?', [currentName, id],
+      tx.executeSql(
+        'UPDATE names SET name = ? WHERE id = ?',
+        [editedName, id],
         (txObj, resultSet) => {
           if (resultSet.rowsAffected > 0) {
             let existingNames = [...names];
             const indexToUpdate = existingNames.findIndex(name => name.id === id);
-            existingNames[indexToUpdate].name = currentName;
+            existingNames[indexToUpdate].name = editedName;
             setNames(existingNames);
             setCurrentName(undefined);
+            closeEditModal(); // Close the edit modal after successful update
           }
         },
         (txObj, error) => console.log(error)
@@ -111,7 +138,7 @@ const HomeScreen = ({ navigation }) => {
         <IconButton 
           icon="pencil" 
           iconColor="#fff"
-          // onPress={() => {handleEditTodo(item); setModalVisible(true)}}
+          onPress={() => {openEditModal(name.id, name.name)}} //changed
         />
         <IconButton 
           icon="trash-can" 
@@ -138,7 +165,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
       <StatusBar style="auto" />
-  
+
       <Modal
       animationType="slide"
       transparent={true}
@@ -167,11 +194,51 @@ const HomeScreen = ({ navigation }) => {
             onPress={() => {setModalVisible(!modalVisible); addName()}}>
             <Text style={styles.textStyle}>Add</Text>
             </Pressable>
+            <Pressable
+            style={[styles.button, styles.submitAddButton]}
+            onPress={() => {setModalVisible(!modalVisible);}}>
+            <Text style={styles.textStyle}>Cancel</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
 
-    
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={editModalVisible}
+      onRequestClose={() => {
+        Alert.alert('Edit Modal has been closed.');
+        closeEditModal();
+      }}>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <TextInput
+            style={{
+              borderWidth: 2,
+              borderColor: "#000",
+              borderRadius: 6,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              marginBottom: 20
+            }}
+            placeholder="Edit a task"
+            value={editedName}
+            onChangeText={setEditedName}
+          />
+          <Pressable
+            style={[styles.button, styles.submitAddButton]}
+            onPress={updateNameAndCloseModal}>
+            <Text style={styles.textStyle}>Update</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.button, styles.submitAddButton]}
+            onPress={closeEditModal}>
+            <Text style={styles.textStyle}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
 
       <View style={styles.addButton}>
         <Pressable
