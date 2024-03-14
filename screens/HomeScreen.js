@@ -1,13 +1,14 @@
-import { TextInput, Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
-import Task from '../components/Task';
+import { TextInput, Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native'
+import Task from '../components/Task'
 import Folder from '../components/Folder'
 import { useState, useEffect } from 'react'
 import React from 'react'
-import { IconButton } from 'react-native-paper';
-import Fallback from "../components/Fallback";
-import { StatusBar } from 'expo-status-bar';
+import { IconButton } from 'react-native-paper'
+import Fallback from "../components/Fallback"
+import { StatusBar } from 'expo-status-bar'
 
-import * as SQLite from 'expo-sqlite';
+import * as SQLite from 'expo-sqlite'
+import { Directions } from 'react-native-gesture-handler'
 
 const HomeScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -198,6 +199,7 @@ const HomeScreen = ({ navigation }) => {
       <StatusBar style="auto" />
 
       <Modal
+      style={{margin: 0}}
       animationType="slide"
       transparent={true}
       visible={modalVisible}
@@ -208,28 +210,24 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <TextInput
-            style={{
-              borderWidth: 2,
-              borderColor: "#000",
-              borderRadius: 6,
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              marginBottom: 20
-            }}
+            multiline={true}
+            numberOfLines={4}        
+            style={styles.text}
             placeholder="Add a task"
-            // value={todo}
             onChangeText={setCurrentName}
           />
+          <View style={styles.buttonWrapper}>
             <Pressable
-            style={[styles.button, styles.submitAddButton]}
-            onPress={() => {setModalVisible(!modalVisible); addName()}}>
-            <Text style={styles.textStyle}>Add</Text>
+              style={[styles.button, styles.submitAddButton]}
+              onPress={() => {setModalVisible(!modalVisible); addName()}}>
+              <Text style={styles.textStyle}>Add</Text>
             </Pressable>
             <Pressable
-            style={[styles.button, styles.submitAddButton]}
-            onPress={() => {setModalVisible(!modalVisible);}}>
-            <Text style={styles.textStyle}>Cancel</Text>
-          </Pressable>
+              style={[styles.button, styles.submitAddButton]}
+              onPress={() => {setModalVisible(!modalVisible);}}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>          
         </View>
       </View>
       </Modal>
@@ -245,28 +243,25 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <TextInput
-              style={{
-                borderWidth: 2,
-                borderColor: "#000",
-                borderRadius: 6,
-                paddingVertical: 8,
-                paddingHorizontal: 16,
-                marginBottom: 20
-              }}
+              multiline={true}
+              numberOfLines={4}
+              style={styles.text}
               placeholder="Edit a task"
               value={editedName}
               onChangeText={setEditedName}
             />
-            <Pressable
-              style={[styles.button, styles.submitAddButton]}
-              onPress={updateNameAndCloseModal}>
-              <Text style={styles.textStyle}>Update</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, styles.submitAddButton]}
-              onPress={closeEditModal}>
-              <Text style={styles.textStyle}>Cancel</Text>
-            </Pressable>
+            <View style={styles.buttonWrapper}>
+              <Pressable
+                style={[styles.button, styles.submitAddButton]}
+                onPress={updateNameAndCloseModal}>
+                <Text style={styles.textStyle}>Update</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.submitAddButton]}
+                onPress={closeEditModal}>
+                <Text style={styles.textStyle}>Cancel</Text>
+              </Pressable>
+            </View>            
           </View>
         </View>
       </Modal>
@@ -293,8 +288,6 @@ const styles = StyleSheet.create({
     upComingTasksWrapper: {
       flex: 0.5, // Takes up half of the vertical space
       backgroundColor: 'white',
-      // alignItems: 'center',
-      // justifyContent: 'center',
       paddingTop: 20,
       paddingHorizontal: 20
     },
@@ -317,6 +310,24 @@ const styles = StyleSheet.create({
       flex: 1, // Each column takes up equal space
       paddingHorizontal: 5, // Optional: Add padding between columns
     },
+    text: {
+      borderWidth: 2,
+      borderColor: "#000",
+      borderRadius: 6,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      marginBottom: 20,
+      alignSelf: 'stretch', 
+      height: 50,
+      textAlign: 'center',
+    },
+    buttonWrapper: {
+      padding: 5,
+      marginBottom: 12,
+      flexDirection: "row",
+      justifyContent: 'center'
+      
+    },
     addButton:{
       alignItems: 'flex-end',
       marginEnd: 30,
@@ -329,10 +340,9 @@ const styles = StyleSheet.create({
       marginTop: 22,
     },
     modalView: {
-      margin: 20,
       backgroundColor: 'white',
       borderRadius: 20,
-      padding: 35,
+      padding: 20,
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: {
@@ -343,7 +353,7 @@ const styles = StyleSheet.create({
       shadowRadius: 4,
       elevation: 5,
     },
-    button: {
+    button: {      
       borderRadius: 20,
       padding: 10,
       elevation: 2,
@@ -359,10 +369,10 @@ const styles = StyleSheet.create({
       borderWidth: 1,
     },
     submitAddButton: {
+      marginLeft: 20,
       backgroundColor: '#2196F3',
     },
     textStyle: {
-      // color: 'white',
       fontWeight: 'bold',
       textAlign: 'center',
     },
