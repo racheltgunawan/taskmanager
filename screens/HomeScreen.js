@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { TextInput, Alert, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
 import Task from '../components/Task';
 import Folder from '../components/Folder'
@@ -6,6 +5,7 @@ import { useState, useEffect } from 'react'
 import React from 'react'
 import { IconButton } from 'react-native-paper';
 import Fallback from "../components/Fallback";
+import { StatusBar } from 'expo-status-bar';
 
 import * as SQLite from 'expo-sqlite';
 
@@ -20,19 +20,16 @@ const HomeScreen = ({ navigation }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editItemId, setEditItemId] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(null);
 
-  const openEditModal = (id, name) => {
-    setEditedName(name);
-    setEditItemId(id);
-    setEditModalVisible(true);
-  };
-
+  
   const updateNameAndCloseModal = () => {
     if (editItemId !== null && editedName !== '') {
-      updateName(editItemId);
+      updateName(editItemId, editedName); // Pass editedName to updateName function
       setEditModalVisible(false);
     }
   };
+  
 
   const closeEditModal = () => {
     setEditedName('');
@@ -41,23 +38,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const showFilteredNames = () => {
-    return names
-      .filter((name) => name.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      .map((name, index) => (
-        <View key={index} style={{
-          backgroundColor: "#1e90ff",
-          borderRadius: 6,
-          paddingHorizontal: 6,
-          paddingVertical: 8,
-          marginBottom: 12,
-          flexDirection: "row",
-          alignItems: "center",
-        }}>
-          <Text style={{ color: "#fff", fontSize: 20, fontWeight: "800", flex: 1 }}>{name.name}</Text>
-          <IconButton icon="pencil" iconColor="#fff" onPress={() => openEditModal(name.id, name.name)} />
-          <IconButton icon="trash-can" iconColor="#fff" onPress={() => deleteName(name.id)} />
-        </View>
-      ));
+    return showNames(names.filter((name) => name.name.toLowerCase().includes(searchQuery.toLowerCase())));
   };
 
   useEffect(() => {
@@ -111,26 +92,35 @@ const HomeScreen = ({ navigation }) => {
     });
   };
 
-  const updateName = (id) => {
+  const openEditModal = (id, name) => {
+    setEditedName(name);
+    setEditItemId(id);
+    setEditModalVisible(true);
+  };
+  
+  const updateName = (id, updatedName) => {
     db.transaction(tx => {
       tx.executeSql(
         'UPDATE names SET name = ? WHERE id = ?',
-        [editedName, id],
+        [updatedName, id],
         (txObj, resultSet) => {
           if (resultSet.rowsAffected > 0) {
-            let existingNames = [...names];
-            const indexToUpdate = existingNames.findIndex(name => name.id === id);
-            existingNames[indexToUpdate].name = editedName;
-            setNames(existingNames);
+            const updatedNames = names.map(item => {
+              if (item.id === id) {
+                return { ...item, name: updatedName };
+              }
+              return item;
+            });
+            setNames(updatedNames);
             setCurrentName(undefined);
-            closeEditModal(); // Close the edit modal after successful update
+            closeEditModal();
           }
         },
         (txObj, error) => console.log(error)
       );
     });
   };
-
+  
   const showNames = () => {
     return names.map((name, index) => {
       return (
@@ -182,10 +172,6 @@ const HomeScreen = ({ navigation }) => {
           {showFilteredNames()}
           {names.length <= 0 && <Fallback />}
         </View>       
-        {/* <View style={styles.Tasks}>
-          {showNames()}
-          {names.length <= 0 && <Fallback />}
-        </View> */}
       </View>
 
       <View style={styles.foldersWrapper}>
