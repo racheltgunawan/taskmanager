@@ -16,8 +16,7 @@ const HomeScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [names, setNames] = useState([]);
   const [currentName, setCurrentName] = useState(undefined);
-
-  //added
+  const [searchQuery, setSearchQuery] = useState('');
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editItemId, setEditItemId] = useState(null);
@@ -40,7 +39,26 @@ const HomeScreen = ({ navigation }) => {
     setEditItemId(null);
     setEditModalVisible(false);
   };
-// add end 
+
+  const showFilteredNames = () => {
+    return names
+      .filter((name) => name.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map((name, index) => (
+        <View key={index} style={{
+          backgroundColor: "#1e90ff",
+          borderRadius: 6,
+          paddingHorizontal: 6,
+          paddingVertical: 8,
+          marginBottom: 12,
+          flexDirection: "row",
+          alignItems: "center",
+        }}>
+          <Text style={{ color: "#fff", fontSize: 20, fontWeight: "800", flex: 1 }}>{name.name}</Text>
+          <IconButton icon="pencil" iconColor="#fff" onPress={() => openEditModal(name.id, name.name)} />
+          <IconButton icon="trash-can" iconColor="#fff" onPress={() => deleteName(name.id)} />
+        </View>
+      ));
+  };
 
   useEffect(() => {
     db.transaction(tx => {
@@ -153,11 +171,21 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>      
       <View style={styles.upComingTasksWrapper}>
-        <Text style={styles.upComingTasks}>Upcoming Tasks</Text>       
+        <Text style={styles.upComingTasks}>Upcoming Tasks</Text>
+        <TextInput
+        style={styles.searchInput}
+        placeholder="Search tasks"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
         <View style={styles.Tasks}>
+          {showFilteredNames()}
+          {names.length <= 0 && <Fallback />}
+        </View>       
+        {/* <View style={styles.Tasks}>
           {showNames()}
           {names.length <= 0 && <Fallback />}
-        </View>
+        </View> */}
       </View>
 
       <View style={styles.foldersWrapper}>
@@ -201,44 +229,44 @@ const HomeScreen = ({ navigation }) => {
           </Pressable>
         </View>
       </View>
-    </Modal>
+      </Modal>
 
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={editModalVisible}
-      onRequestClose={() => {
-        Alert.alert('Edit Modal has been closed.');
-        closeEditModal();
-      }}>
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <TextInput
-            style={{
-              borderWidth: 2,
-              borderColor: "#000",
-              borderRadius: 6,
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              marginBottom: 20
-            }}
-            placeholder="Edit a task"
-            value={editedName}
-            onChangeText={setEditedName}
-          />
-          <Pressable
-            style={[styles.button, styles.submitAddButton]}
-            onPress={updateNameAndCloseModal}>
-            <Text style={styles.textStyle}>Update</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.button, styles.submitAddButton]}
-            onPress={closeEditModal}>
-            <Text style={styles.textStyle}>Cancel</Text>
-          </Pressable>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => {
+          Alert.alert('Edit Modal has been closed.');
+          closeEditModal();
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <TextInput
+              style={{
+                borderWidth: 2,
+                borderColor: "#000",
+                borderRadius: 6,
+                paddingVertical: 8,
+                paddingHorizontal: 16,
+                marginBottom: 20
+              }}
+              placeholder="Edit a task"
+              value={editedName}
+              onChangeText={setEditedName}
+            />
+            <Pressable
+              style={[styles.button, styles.submitAddButton]}
+              onPress={updateNameAndCloseModal}>
+              <Text style={styles.textStyle}>Update</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.submitAddButton]}
+              onPress={closeEditModal}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
 
       <View style={styles.addButton}>
         <Pressable
@@ -247,7 +275,6 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.textStyle}>+</Text>
         </Pressable>
       </View>
-  
     </View>
   )
 };
@@ -339,5 +366,13 @@ const styles = StyleSheet.create({
     modalText: {
       marginBottom: 15,
       textAlign: 'center',
+    },
+    searchInput: {
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 0,
+      marginTop: 20,
     },
 });
