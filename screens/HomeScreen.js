@@ -369,7 +369,8 @@ const styles = StyleSheet.create({
       borderWidth: 1,
     },
     submitAddButton: {
-      marginLeft: 20,
+      margin: 8,
+      minWidth: 100,
       backgroundColor: '#2196F3',
     },
     textStyle: {
